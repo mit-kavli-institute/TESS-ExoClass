@@ -257,11 +257,10 @@ if __name__ == '__main__':
     fvpn = dataBlock['f1']
     fvvet = dataBlock['f2']
     
-    allvet = np.zeros_like(allpn)
-    for i in range(len(allvet)):
-        idx = np.where((alltic[i] == fvtic) & (allpn[i] == fvpn))[0]
-        if len(idx) > 0:
-            allvet[i] = fvvet[idx]
+    vet_lookup = {(int(fvtic[i]), int(fvpn[i])): int(fvvet[i])
+                  for i in range(len(fvtic))}
+    allvet = np.array([vet_lookup.get((int(alltic[i]), int(allpn[i])), 0)
+                       for i in range(len(allpn))], dtype=allpn.dtype)
     # only keep tces with both valid dv and trapezoid fits
     # and flux vetted pass and period < PERMAX
     idx = np.where((allatvalid == 1) & (alltrpvalid == 1) & (allsolarflux > 0.0) & \
