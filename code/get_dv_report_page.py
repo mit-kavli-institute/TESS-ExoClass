@@ -63,10 +63,10 @@ if __name__ == '__main__':
     
     # Load the tce data h5
     tcedata = tce_seed()
-    all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)    
+    all_tces = tcedata.fill_dset_from_hd5f(tceSeedInFile)
 
-    alltic = np.array([x.epicId for x in all_tces], dtype=np.int64)
-    allpn = np.array([x.planetNum for x in all_tces], dtype=int)
+    alltic = np.array(all_tces['epicId'], dtype=np.int64)
+    allpn = np.array(all_tces['planetNum'], dtype=int)
     #idx = np.where(alltic == 167600516)[0]
     #alltic = alltic[idx[0]:]
     #allpn = allpn[idx[0]:]

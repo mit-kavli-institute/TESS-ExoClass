@@ -143,7 +143,7 @@ if __name__ == '__main__':
     # Load the tce data h5
     tceSeedInFile = '{0}_tce.h5'.format(tp.tecfile)
     tcedata = tce_seed()
-    all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)
+    all_tces = tcedata.fill_dset_from_hd5f(tceSeedInFile)
     # Check to see if cadence to time mappting is available
     hasCadTimeMap = False
     if os.path.exists('cadnoVtimemap.txt'):
@@ -154,22 +154,22 @@ if __name__ == '__main__':
         hasCadTimeMap = True
 
 
-    
-    alltic = np.array([x.epicId for x in all_tces], dtype=np.int64)
-    allpn = np.array([x.planetNum for x in all_tces], dtype=int)
-    allatvalid = np.array([x.at_valid for x in all_tces], dtype=int)
-    allrp = np.array([x.at_rp for x in all_tces])
-    allper = np.array([x.at_period for x in all_tces])
-    alldur = np.array([x.at_dur for x in all_tces])
-    allepc = np.array([x.at_epochbtjd for x in all_tces])
-    alltrpvalid = np.array([x.trp_valid for x in all_tces], dtype=int)
-    alltrpdur = np.array([x.trp_dur for x in all_tces])
-    alltrpepc = np.array([x.trp_epochbtjd for x in all_tces])
-    alltcedur = np.array([x.pulsedur for x in all_tces])
-    alltceepc = np.array([x.tce_epoch for x in all_tces])
-    alltceper = np.array([x.tce_period for x in all_tces])
-    alltceCadStrt = np.array([x.data_start for x in all_tces], dtype=np.int64)
-    alltceCadEnd = np.array([x.data_end for x in all_tces], dtype=np.int64)
+
+    alltic = np.array(all_tces['epicId'], dtype=np.int64)
+    allpn = np.array(all_tces['planetNum'], dtype=int)
+    allatvalid = np.array(all_tces['at_valid'], dtype=int)
+    allrp = np.array(all_tces['at_rp'])
+    allper = np.array(all_tces['at_period'])
+    alldur = np.array(all_tces['at_dur'])
+    allepc = np.array(all_tces['at_epochbtjd'])
+    alltrpvalid = np.array(all_tces['trp_valid'], dtype=int)
+    alltrpdur = np.array(all_tces['trp_dur'])
+    alltrpepc = np.array(all_tces['trp_epochbtjd'])
+    alltcedur = np.array(all_tces['pulsedur'])
+    alltceepc = np.array(all_tces['tce_epoch'])
+    alltceper = np.array(all_tces['tce_period'])
+    alltceCadStrt = np.array(all_tces['data_start'], dtype=np.int64)
+    alltceCadEnd = np.array(all_tces['data_end'], dtype=np.int64)
     # Go through each tce and use valid fits from dv, trpzd, tce in that order for matching
     useper = np.zeros_like(allper)
     useepc = np.zeros_like(allper)

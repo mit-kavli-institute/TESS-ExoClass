@@ -245,9 +245,9 @@ if __name__ == "__main__":
     # Load the tce data h5
     tceSeedInFile = '{0}_tce.h5'.format(tp.tecfile)
     tcedata = tce_seed()
-    all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)
+    all_tces = tcedata.fill_dset_from_hd5f(tceSeedInFile)
 
-    alltic = np.unique(np.array([x.epicId for x in all_tces], dtype=np.int64))
+    alltic = np.unique(np.array(all_tces['epicId'], dtype=np.int64))
 
     cnt=0
 

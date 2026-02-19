@@ -61,13 +61,13 @@ if __name__ == '__main__':
     if (os.path.isfile(tceSeedInFile)):
         # Load the tce data h5
         tcedata = tce_seed()
-        all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)
-        alltic = np.array([x.epicId for x in all_tces], dtype=np.int64)
-        all_pns = np.array([x.planetNum for x in all_tces], dtype=int)
-        allsolarflux = np.array([x.at_effflux for x in all_tces])
-        alltrpvalid = np.array([x.trp_valid for x in all_tces])
-        allatvalid = np.array([x.at_valid for x in all_tces], dtype=int)
-        allper = np.array([x.at_period for x in all_tces])
+        all_tces = tcedata.fill_dset_from_hd5f(tceSeedInFile)
+        alltic = np.array(all_tces['epicId'], dtype=np.int64)
+        all_pns = np.array(all_tces['planetNum'], dtype=int)
+        allsolarflux = np.array(all_tces['at_effflux'])
+        alltrpvalid = np.array(all_tces['trp_valid'])
+        allatvalid = np.array(all_tces['at_valid'], dtype=int)
+        allper = np.array(all_tces['at_period'])
 
         allUnqTic = np.unique(alltic)
         prereq = 1

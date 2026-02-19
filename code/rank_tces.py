@@ -134,8 +134,8 @@ if __name__ == '__main__':
     # Load the tce data h5
     tceSeedInFile = '{0}_tce.h5'.format(tp.tecfile)
     tcedata = tce_seed()
-    all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)
-    
+    all_tces = tcedata.fill_dset_from_hd5f(tceSeedInFile)
+
     # Define rank ramp limits
     rplims = [2.0, 6.0]
     meslims = [12.0, 9.0]
@@ -147,28 +147,28 @@ if __name__ == '__main__':
     reldepthlims = [0.1, 0.3]
     centlims = [2.0, 3.0]
     oelims = [0.05, 5.0e-2]
-    
-    alltic = np.array([x.epicId for x in all_tces], dtype=np.int64)
-    allpn = np.array([x.planetNum for x in all_tces], dtype=int)
-    allatvalid = np.array([x.at_valid for x in all_tces], dtype=int)
-    allrp = np.array([x.at_rp for x in all_tces])
-    allrstar = np.array([x.rstar for x in all_tces])
-    alllogg = np.array([x.logg for x in all_tces])
-    allper = np.array([x.at_period for x in all_tces])
-    alltmags = np.array([x.tmag for x in all_tces])
-    allmes = np.array([x.mes for x in all_tces])
-    allsnr = np.array([x.at_snr for x in all_tces])
-    alldur = np.array([x.at_dur for x in all_tces])
-    allsolarflux = np.array([x.at_effflux for x in all_tces])
-    allatdep = np.array([x.at_depth for x in all_tces])
-    alltrpvalid = np.array([x.trp_valid for x in all_tces], dtype=int)
-    alltrpdep = np.array([x.trp_depth for x in all_tces])
-    allsesinmes = np.array([x.maxsesinmes for x in all_tces])
-    allcentoot = np.array([x.cent_oot_offset for x in all_tces])
-    allcentoote = np.array([x.cent_oot_offset_e for x in all_tces])
-    allcenttic = np.array([x.cent_tic_offset for x in all_tces])
-    allcenttice = np.array([x.cent_tic_offset_e for x in all_tces])
-    alloesig = np.array([x.oe_signif for x in all_tces])
+
+    alltic = np.array(all_tces['epicId'], dtype=np.int64)
+    allpn = np.array(all_tces['planetNum'], dtype=int)
+    allatvalid = np.array(all_tces['at_valid'], dtype=int)
+    allrp = np.array(all_tces['at_rp'])
+    allrstar = np.array(all_tces['rstar'])
+    alllogg = np.array(all_tces['logg'])
+    allper = np.array(all_tces['at_period'])
+    alltmags = np.array(all_tces['tmag'])
+    allmes = np.array(all_tces['mes'])
+    allsnr = np.array(all_tces['at_snr'])
+    alldur = np.array(all_tces['at_dur'])
+    allsolarflux = np.array(all_tces['at_effflux'])
+    allatdep = np.array(all_tces['at_depth'])
+    alltrpvalid = np.array(all_tces['trp_valid'], dtype=int)
+    alltrpdep = np.array(all_tces['trp_depth'])
+    allsesinmes = np.array(all_tces['maxsesinmes'])
+    allcentoot = np.array(all_tces['cent_oot_offset'])
+    allcentoote = np.array(all_tces['cent_oot_offset_e'])
+    allcenttic = np.array(all_tces['cent_tic_offset'])
+    allcenttice = np.array(all_tces['cent_tic_offset_e'])
+    alloesig = np.array(all_tces['oe_signif'])
     allcentootsig = allcentoot/allcentoote
     allcentticsig = allcenttic/allcenttice
     allcentootsig = np.where(allcentootsig < 0.0, 99.0, allcentootsig)
