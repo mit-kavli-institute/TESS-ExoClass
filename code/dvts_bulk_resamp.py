@@ -9,6 +9,8 @@ about the target from the header of the fits file is also kept
 @author: Christopher J. Burke
 """
 
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
