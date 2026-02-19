@@ -91,6 +91,47 @@ TEC currently consists of 5 primary outputs that are of most interest to the com
 The doc folder has documentation that describes the columns for the TEC outputs, a semi-thorough step-by-step guide for running TEC on the NASA Ames SPOC TCEs along with hints for implementing TEC codes for your own pipeline results.
 
 ### Code
-TEC code is in the code folder.  It is primarily python.  See doc/tess-exoclass_opsnotes_s04.txt for the guide for running the code for the NASA Ames SPOC TCEs with data products available at MAST.
+TEC code is in the code folder.  It is primarily python.  See doc/tess-exoclass_opsnotes_s04.txt for the guide for running the code for the NASA Ames SPOC TCEs with data products available at MAST.  See also `TEC Single Sector Procedure.md` for a step-by-step walkthrough.
 
- 
+### Parallelization
+
+Several pipeline scripts support GNU parallel execution via `-w` (worker ID, 0-indexed) and `-n` (total workers) flags. This allows distributing per-TCE processing across multiple cores:
+
+| Script | Parallelizable | Output handling |
+|--------|---------------|-----------------|
+| `ses_mes_stats.py` | Yes | Per-TCE HDF5 files (no merge needed) |
+| `rank_tces.py` | Yes | Per-worker tier files when `nWrk > 1`; single-worker mode writes tier files directly |
+| `sweet_test.py` | Yes | Per-worker text files (`*_w{ID}.txt`); concatenate after all workers finish |
+| `modump_check.py` | Yes | Per-worker text files (`*_w{ID}.txt`); concatenate after all workers finish |
+| `grab_flxwcent.py` | Yes | Per-TCE HDF5 files (no merge needed) |
+| `modshift_test.py` | No (has resume logic) | Single output file |
+
+Example with 13 parallel workers:
+```bash
+# SES/MES statistics (pre-existing)
+seq 0 12 | parallel --results ses_mes_results python3 ses_mes_stats.py -w {} -n 13
+
+# SWEET test
+seq 0 12 | parallel --results sweet_test_results python3 sweet_test.py -w {} -n 13
+cat spoc_sweet_*_w*.txt > spoc_sweet_${TECFILE}.txt
+
+# Momentum dump check
+seq 0 12 | parallel --results modump_check_results python3 modump_check.py -w {} -n 13
+cat spoc_modump_*_w*.txt > spoc_modump_${TECFILE}.txt
+
+# Flux-weighted centroids (single sector)
+seq 0 12 | parallel --results grab_flxwcent_results python3 grab_flxwcent.py -w {} -n 13
+# Multi-sector with sector specification
+seq 0 12 | parallel --results grab_flxwcent_results python3 grab_flxwcent.py -s 14-26,40-50 -w {} -n 13
+
+# Ranking and report generation (pre-existing)
+seq 0 12 | parallel --results rank_tces_results python3 rank_tces.py -w {} -n 13
+```
+
+All parallelized scripts produce identical results to single-process execution when run with `-w 0 -n 1` (the default).
+
+### Performance Notes
+
+- All NumPy-heavy scripts set `OPENBLAS_NUM_THREADS=1` before importing NumPy. This prevents OpenBLAS internal threading from conflicting with GNU parallel's process-level parallelism.
+- Vetfile cross-match lookups use dictionary joins instead of per-TCE array scans, improving startup time for large TCE lists.
+
