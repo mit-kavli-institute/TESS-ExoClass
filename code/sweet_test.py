@@ -16,6 +16,7 @@ from statsmodels import robust
 from pgmcmc import pgmcmc_ioblk, pgmcmc_setup
 from pgmcmc import pgmcmc_run_mcmc, pgmcmc_run_minimizer
 import matplotlib.pyplot as plt
+import argparse
 from tec_used_params import tec_use_params
 
 def make_data_dirs(prefix, sector, epic):
@@ -215,15 +216,29 @@ def pgmcmc_prior(ioblk):
 
 
 if __name__ == '__main__':
+    # Parse the command line arguments for multiprocessing
+    # With Gnu parallel with 13 cores
+    # seq 0 12 | parallel --results sweet_test_results python sweet_test.py -w {} -n 13
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", type=int, default=0,
+                        help="Worker ID Number 0 through nWrk-1")
+    parser.add_argument("-n", type=int, default=1,
+                        help="Number of Workers")
+    args = parser.parse_args()
+    wID = int(args.w)
+    nWrk = int(args.n)
+
     # Maximum period for test
     MAXPER = 5.0
     tp = tec_use_params()
-    
+
     #  Directory storing the ses mes time series
     sesMesDir = '/pdo/users/cjburke/spocvet/{0}'.format(tp.tecdir)
     SECTOR = tp.sector
 
     fileOut = 'spoc_sweet_{0}.txt'.format(tp.tecfile)
+    if nWrk > 1:
+        fileOut = 'spoc_sweet_{0}_w{1:d}.txt'.format(tp.tecfile, wID)
     fom = open(fileOut, 'w')
     vetFile = 'spoc_fluxtriage_{0}.txt'.format(tp.tecfile)
     tceSeedInFile = '{0}_tce.h5'.format(tp.tecfile)
@@ -275,6 +290,8 @@ if __name__ == '__main__':
             
     # Calculate modshift over flux triage passing TCEs
     for i, curTic in enumerate(alltic):
+        if np.mod(i, nWrk) != wID:
+            continue
         print('{:d} of {:d}'.format(i, len(alltic)))
         curPn = allpn[i]
         fileInput = os.path.join(make_data_dirs(sesMesDir, SECTOR, curTic), 'tess_sesmes_{0:016d}_{1:02d}.h5d'.format(curTic,curPn))
