@@ -194,8 +194,14 @@ class tce_seed(object):
             # Append object to list
             all_objs.append(tmp)
         return all_objs
-        
-        
+
+    def fill_dset_from_hd5f(self, fileName):
+        fp = h5py.File(fileName, 'r')
+        np_dset = np.array(fp['dset'])
+        fp.close()
+        return np_dset
+
+
 if __name__ == "__main__":
     tp = tec_use_params()
     tceSeedOutFile = '{0}_tce.h5'.format(tp.tecfile)
