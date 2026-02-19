@@ -55,9 +55,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-s",nargs='?',\
                         help="String that specificies the sectors involved in the multisector run. It works like a printer page specification. For example '14-26,40-50' would include sectors 14-26 and sectors 40-50")
-    
+    parser.add_argument("-w", type=int, default=0,
+                        help="Worker ID Number 0 through nWrk-1")
+    parser.add_argument("-n", type=int, default=1,
+                        help="Number of Workers")
 
     args = parser.parse_args()
+    wID = int(args.w)
+    nWrk = int(args.n)
     secstr = args.s
     if not secstr is None:
         sectorswant = parse_range(secstr)
@@ -163,6 +168,8 @@ if __name__ == '__main__':
             
     # Get flux weighted centroids  and PDC stats over flux triage passing TCEs
     for i, curTic in enumerate(alltic):
+        if np.mod(i, nWrk) != wID:
+            continue
         print('{:d} of {:d}'.format(i, len(alltic)))
         curPn = allpn[i]
         hasSector = np.zeros((nSector,), dtype=int)
