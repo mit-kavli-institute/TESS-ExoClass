@@ -9,6 +9,8 @@ The Time re-sampling of these is on an hour time scale
 AUTHOR: Christopher J. Burke
 """
 
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import numpy as np
 import pickle
 from gather_tce_fromdvxml import tce_seed
