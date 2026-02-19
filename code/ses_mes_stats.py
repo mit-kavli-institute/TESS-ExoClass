@@ -329,11 +329,11 @@ if __name__ == "__main__":
 
     # Load the tce data h5
     tcedata = tce_seed()
-    all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)
+    all_tces = tcedata.fill_dset_from_hd5f(tceSeedInFile)
 
-    # These next few lines can be used to examine a single target    
-    #all_epics = np.array([x.epicId for x in all_tces], dtype=np.int64)
-    #all_pns = np.array([x.planetNum for x in all_tces], dtype=int)
+    # These next few lines can be used to examine a single target
+    #all_epics = np.array(all_tces['epicId'], dtype=np.int64)
+    #all_pns = np.array(all_tces['planetNum'], dtype=int)
     #ia = np.where((all_epics == 616060323) & (all_pns == 1))[0]
     #doDebug = True
     # Loop over tces and perform various ses, mes, chases tests
@@ -342,43 +342,44 @@ if __name__ == "__main__":
     # This for loop can be used for debugging
     #for td in all_tces[ia[0]:ia[0]+1]:
     # Normal for loop
-    for td in all_tces:
-        epicid = td.epicId
+    for i in range(len(all_tces)):
+        td = all_tces[i]
+        epicid = td['epicId']
         print(cnt, epicid)
         cnt = cnt+1
         if np.mod(cnt, nWrk) == wID:
             if np.mod(cnt,10) == 0:
                 print(cnt)
     
-            pn = td.planetNum
+            pn = td['planetNum']
             period = 0.0
             epoch = 0.0
             duration = 0.0
             depth = 0.0
-            if td.at_valid == 1:
-                period = td.at_period
-                epoch = td.at_epochbtjd
-                duration = td.at_dur
-                depth = td.at_depth
-            elif td.trp_valid == 1:
-                period = td.tce_period
-                epoch = td.trp_epochbtjd
-                duration = td.trp_dur
-                depth = td.trp_depth
+            if td['at_valid'] == 1:
+                period = td['at_period']
+                epoch = td['at_epochbtjd']
+                duration = td['at_dur']
+                depth = td['at_depth']
+            elif td['trp_valid'] == 1:
+                period = td['tce_period']
+                epoch = td['trp_epochbtjd']
+                duration = td['trp_dur']
+                depth = td['trp_depth']
             else:
-                period = td.tce_period
-                epoch = td.tce_epoch
-                duration = td.pulsedur
+                period = td['tce_period']
+                epoch = td['tce_epoch']
+                duration = td['pulsedur']
                 depth = 1000.0
             fileOutput = os.path.join(make_data_dirs(outputDir, SECTOR, epicid), 'tess_sesmes_{0:016d}_{1:02d}.h5d'.format(epicid,pn))
             fileExists = os.path.isfile(fileOutput)
             if (not fileExists) or overWrite:
-                print('pulse: {:f} fitdur: {:f}'.format(td.pulsedur, duration))
-                searchDurationHours = np.max([td.pulsedur, duration])
+                print('pulse: {:f} fitdur: {:f}'.format(td['pulsedur'], duration))
+                searchDurationHours = np.max([td['pulsedur'], duration])
                 # Cap duration at 15 hours
                 searchDurationHours = np.min([searchDurationHours, 15.0])
         
-                origMes = td.mes
+                origMes = td['mes']
                 print('Orig ',origMes, epicid, pn)
                 localDir = make_data_dirs(dvDataDir,SECTOR,epicid)
                 fileInput = os.path.join(localDir, 'tess_dvts_{0:016d}_{1:02d}.h5d'.format(epicid,pn))
@@ -428,15 +429,18 @@ if __name__ == "__main__":
                 vd[idxvd] = False
                 # assign sector numbers to data
                 secnum = np.ones_like(cadNo, dtype=int)
-                idxSec = np.where(td.all_sectors>=0)[0]
-                td.all_sectors = td.all_sectors[idxSec]
-                td.all_cadstart = td.all_cadstart[idxSec]
-                td.all_cadend = td.all_cadend[idxSec]
-                nSec = len(td.all_sectors)
-                if len(td.all_sectors)>1:
+                curAllSectors = np.array(td['all_sectors'])
+                curAllCadstart = np.array(td['all_cadstart'])
+                curAllCadend = np.array(td['all_cadend'])
+                idxSec = np.where(curAllSectors >= 0)[0]
+                curAllSectors = curAllSectors[idxSec]
+                curAllCadstart = curAllCadstart[idxSec]
+                curAllCadend = curAllCadend[idxSec]
+                nSec = len(curAllSectors)
+                if len(curAllSectors) > 1:
                     for kk in range(nSec):
-                        idx = np.where((cadNo >= td.all_cadstart[kk]) & (cadNo <= td.all_cadend[kk])  )[0]
-                        secnum[idx] = td.all_sectors[kk]
+                        idx = np.where((cadNo >= curAllCadstart[kk]) & (cadNo <= curAllCadend[kk]))[0]
+                        secnum[idx] = curAllSectors[kk]
                 
                 # Mark data in transit as deweighted during detrending
                 ootvd = np.full_like(vd, True)

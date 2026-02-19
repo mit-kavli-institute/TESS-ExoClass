@@ -35,21 +35,22 @@ def get_useable_ephems(all_tces):
     allper = np.zeros((len(all_tces),))
     allepoch = np.zeros_like(allper)
     allduration = np.zeros_like(allper)
-    for i,td in enumerate(all_tces):
-        allepics[i] = td.epicId
-        allpns[i] = td.planetNum
-        if td.at_valid == 1:
-            allper[i] = td.at_period
-            allepoch[i] = td.at_epochbtjd
-            allduration[i] = td.at_dur
-        elif td.trp_valid ==1:
-            allper[i] = td.tce_period
-            allepoch[i] = td.trp_epochbtjd
-            allduration[i] = td.trp_dur
+    for i in range(len(all_tces)):
+        td = all_tces[i]
+        allepics[i] = td['epicId']
+        allpns[i] = td['planetNum']
+        if td['at_valid'] == 1:
+            allper[i] = td['at_period']
+            allepoch[i] = td['at_epochbtjd']
+            allduration[i] = td['at_dur']
+        elif td['trp_valid'] == 1:
+            allper[i] = td['tce_period']
+            allepoch[i] = td['trp_epochbtjd']
+            allduration[i] = td['trp_dur']
         else:
-            allper[i] = td.tce_period
-            allepoch[i] = td.tce_epoch
-            allduration[i] = td.pulsedur
+            allper[i] = td['tce_period']
+            allepoch[i] = td['tce_epoch']
+            allduration[i] = td['pulsedur']
     return allepics, allpns, allper, allepoch, allduration
 
 if __name__ == '__main__':
@@ -66,41 +67,42 @@ if __name__ == '__main__':
 #    fluxVetOut = 'junk.txt'
 
     tcedata = tce_seed()
-    all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)
-    
+    all_tces = tcedata.fill_dset_from_hd5f(tceSeedInFile)
+
     allepics, allpns, allpers, allepochs, alldurations = get_useable_ephems(all_tces)
-    
+
     fout = open(fluxVetOut, 'w')
     debug = False
     # Loop over tces and perform flux vetting
     # For a particular id
     #debug=True
-    #alltic = np.array([x.epicId for x in all_tces], dtype=np.int64)
+    #alltic = np.array(all_tces['epicId'], dtype=np.int64)
     #idxdebug = np.where(alltic == 123702439)[0]
     cnt = 0
     #for td in [all_tces[idxdebug[0]],all_tces[idxdebug[0]]]:
-    for td in all_tces:
+    for i in range(len(all_tces)):
+        td = all_tces[i]
         print(cnt)
         cnt = cnt+1
-        epicid = td.epicId
-        pn = td.planetNum
+        epicid = td['epicId']
+        pn = td['planetNum']
         period = 0.0
         epoch = 0.0
         duration = 0.0
-        if td.at_valid == 1:
-            period = td.at_period
-            epoch = td.at_epochbtjd
-            duration = td.at_dur
-        elif td.trp_valid == 1:
-            period = td.tce_period
-            epoch = td.trp_epochbtjd
-            duration = td.trp_dur
+        if td['at_valid'] == 1:
+            period = td['at_period']
+            epoch = td['at_epochbtjd']
+            duration = td['at_dur']
+        elif td['trp_valid'] == 1:
+            period = td['tce_period']
+            epoch = td['trp_epochbtjd']
+            duration = td['trp_dur']
         else:
-            period = td.tce_period
-            epoch = td.tce_epoch
-            duration = td.pulsedur
-        searchDurationHours = td.pulsedur
-        origMes = td.mes
+            period = td['tce_period']
+            epoch = td['tce_epoch']
+            duration = td['pulsedur']
+        searchDurationHours = td['pulsedur']
+        origMes = td['mes']
         print('Orig ',origMes, epicid, pn)
         epcDir = '{0:04d}'.format(int(math.floor(epicid/1000.0)))
         localDir = os.path.join(sesDataDir,'S{0:02d}'.format(SECTOR),epcDir)

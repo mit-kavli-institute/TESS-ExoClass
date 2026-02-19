@@ -28,7 +28,7 @@ if __name__ == "__main__":
     outFile = '{0}_tce.txt'.format(tp.tecfile)
     delim = ' | '
     tcedata = tce_seed()
-    all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)
+    all_tces = tcedata.fill_dset_from_hd5f(tceSeedInFile)
     
     # Loop over tces and write their info out
     cnt = 0
@@ -130,80 +130,81 @@ if __name__ == "__main__":
 
 
 
-    for td in all_tces:        
-        sout = '{0:16d}'.format(td.epicId)  #1
+    for i in range(len(all_tces)):
+        td = all_tces[i]
+        sout = '{0:16d}'.format(td['epicId'])  #1
         print(cnt)
         cnt = cnt+1
-        sout = sout + delim + '{0:2d}'.format(td.planetNum)
-        
-        sout = sout + delim + '{0:2d}'.format(td.totPlanetNum )
+        sout = sout + delim + '{0:2d}'.format(td['planetNum'])
+
+        sout = sout + delim + '{0:2d}'.format(td['totPlanetNum'])
         # Target information
-        sout = sout + delim + '{0:10.6f}'.format(td.decDeg )
-        sout = sout + delim + '{0:10.6f}'.format(td.raDeg) #5 
-        sout = sout + delim + '{0:6.1f}'.format(td.teff)
-        sout = sout + delim + '{0:5.1f}'.format(td.teff_e) 
-        sout = sout + delim + '{0:6.3f}'.format(td.feh )
-        sout = sout + delim + '{0:6.3f}'.format(td.logg)
-        sout = sout + delim + '{0:8.3f}'.format(td.rstar)  #10
-        sout = sout + delim + '{0:7.3f}'.format(td.rstar_e) 
-        sout = sout + delim + '{0:3d}'.format(td.sector )
-        sout = sout + delim + '{0:1d}'.format(td.ccd )
-        sout = sout + delim + '{0:1d}'.format(td.camera) 
-        sout = sout + delim + '{0:7.2f}'.format(td.row ) #15
-        sout = sout + delim + '{0:7.2f}'.format(td.col )
-        sout = sout + delim + '{0:9.3f}'.format(td.pmra )
-        sout = sout + delim + '{0:9.3f}'.format(td.pmdec )
-        sout = sout + delim + '{0:6.3f}'.format(td.tmag )
+        sout = sout + delim + '{0:10.6f}'.format(td['decDeg'])
+        sout = sout + delim + '{0:10.6f}'.format(td['raDeg']) #5
+        sout = sout + delim + '{0:6.1f}'.format(td['teff'])
+        sout = sout + delim + '{0:5.1f}'.format(td['teff_e'])
+        sout = sout + delim + '{0:6.3f}'.format(td['feh'])
+        sout = sout + delim + '{0:6.3f}'.format(td['logg'])
+        sout = sout + delim + '{0:8.3f}'.format(td['rstar'])  #10
+        sout = sout + delim + '{0:7.3f}'.format(td['rstar_e'])
+        sout = sout + delim + '{0:3d}'.format(td['sector'])
+        sout = sout + delim + '{0:1d}'.format(td['ccd'])
+        sout = sout + delim + '{0:1d}'.format(td['camera'])
+        sout = sout + delim + '{0:7.2f}'.format(td['row']) #15
+        sout = sout + delim + '{0:7.2f}'.format(td['col'])
+        sout = sout + delim + '{0:9.3f}'.format(td['pmra'])
+        sout = sout + delim + '{0:9.3f}'.format(td['pmdec'])
+        sout = sout + delim + '{0:6.3f}'.format(td['tmag'])
         # All transit fit
-        sout = sout + delim + '{0:1d}'.format(td.at_valid)  #20
-        sout = sout + delim + '{0:8.3f}'.format(td.at_snr )
-        sout = sout + delim + '{0:11.5f}'.format(td.at_epochbtjd) 
-        sout = sout + delim + '{0:9.5f}'.format(td.at_epochbtjd_e )
-        sout = sout + delim + '{0:8.2f}'.format(td.at_rp )
-        sout = sout + delim + '{0:7.2f}'.format(td.at_rp_e) #25
-        sout = sout + delim + '{0:6.3f}'.format(td.at_imp )
-        sout = sout + delim + '{0:7.3f}'.format(td.at_dur )
-        sout = sout + delim + '{0:8.1f}'.format(td.at_depth )
-        sout = sout + delim + '{0:7.1f}'.format(td.at_depth_e) 
-        sout = sout + delim + '{0:11.6f}'.format(td.at_period ) #30
-        sout = sout + delim + '{0:9.6f}'.format(td.at_period_e) 
-        sout = sout + delim + '{0:9.6f}'.format(td.at_rpDrstar )
-        sout = sout + delim + '{0:9.6f}'.format(td.at_rpDrstar_e) 
-        sout = sout + delim + '{0:8.3f}'.format(td.at_aDrstar )
-        sout = sout + delim + '{0:7.1f}'.format(td.at_eqtemp ) #35
-        sout = sout + delim + '{0:7.2f}'.format(td.at_effflux )
+        sout = sout + delim + '{0:1d}'.format(td['at_valid'])  #20
+        sout = sout + delim + '{0:8.3f}'.format(td['at_snr'])
+        sout = sout + delim + '{0:11.5f}'.format(td['at_epochbtjd'])
+        sout = sout + delim + '{0:9.5f}'.format(td['at_epochbtjd_e'])
+        sout = sout + delim + '{0:8.2f}'.format(td['at_rp'])
+        sout = sout + delim + '{0:7.2f}'.format(td['at_rp_e']) #25
+        sout = sout + delim + '{0:6.3f}'.format(td['at_imp'])
+        sout = sout + delim + '{0:7.3f}'.format(td['at_dur'])
+        sout = sout + delim + '{0:8.1f}'.format(td['at_depth'])
+        sout = sout + delim + '{0:7.1f}'.format(td['at_depth_e'])
+        sout = sout + delim + '{0:11.6f}'.format(td['at_period']) #30
+        sout = sout + delim + '{0:9.6f}'.format(td['at_period_e'])
+        sout = sout + delim + '{0:9.6f}'.format(td['at_rpDrstar'])
+        sout = sout + delim + '{0:9.6f}'.format(td['at_rpDrstar_e'])
+        sout = sout + delim + '{0:8.3f}'.format(td['at_aDrstar'])
+        sout = sout + delim + '{0:7.1f}'.format(td['at_eqtemp']) #35
+        sout = sout + delim + '{0:7.2f}'.format(td['at_effflux'])
         # Ghost diag
-        sout = sout + delim + '{0:8.3f}'.format(td.ghostcoreval) 
-        sout = sout + delim + '{0:8.3f}'.format(td.ghostcoresig )
-        sout = sout + delim + '{0:8.3f}'.format(td.ghosthalosig )
-        sout = sout + delim + '{0:8.3f}'.format(td.ghosthaloval ) #40
+        sout = sout + delim + '{0:8.3f}'.format(td['ghostcoreval'])
+        sout = sout + delim + '{0:8.3f}'.format(td['ghostcoresig'])
+        sout = sout + delim + '{0:8.3f}'.format(td['ghosthalosig'])
+        sout = sout + delim + '{0:8.3f}'.format(td['ghosthaloval']) #40
         # TCE Infor
-        tmp = td.modchi2
+        tmp = td['modchi2']
         if not np.isfinite(tmp):
             sout = sout + delim + '{0:8.2f}'.format(99999.99)
         else:
-            sout = sout + delim + '{0:8.2f}'.format(td.modchi2 ) #41
-        sout = sout + delim + '{0:8.3f}'.format(td.gof )
-        sout = sout + delim + '{0:4d}'.format(td.ntran)
-        sout = sout + delim + '{0:8.3f}'.format(td.chi2 )
-        sout = sout + delim + '{0:11.5f}'.format(td.tce_epoch) #45
-        sout = sout + delim + '{0:9.3f}'.format(td.mes )
-        sout = sout + delim + '{0:8.3f}'.format(td.maxsesinmes) 
-        sout = sout + delim + '{0:11.6f}'.format(td.tce_period )
-        sout = sout + delim + '{0:9.3f}'.format(td.robstat )
-        sout = sout + delim + '{0:7.3f}'.format(td.pulsedur ) #50
+            sout = sout + delim + '{0:8.2f}'.format(td['modchi2']) #41
+        sout = sout + delim + '{0:8.3f}'.format(td['gof'])
+        sout = sout + delim + '{0:4d}'.format(td['ntran'])
+        sout = sout + delim + '{0:8.3f}'.format(td['chi2'])
+        sout = sout + delim + '{0:11.5f}'.format(td['tce_epoch']) #45
+        sout = sout + delim + '{0:9.3f}'.format(td['mes'])
+        sout = sout + delim + '{0:8.3f}'.format(td['maxsesinmes'])
+        sout = sout + delim + '{0:11.6f}'.format(td['tce_period'])
+        sout = sout + delim + '{0:9.3f}'.format(td['robstat'])
+        sout = sout + delim + '{0:7.3f}'.format(td['pulsedur']) #50
         # Trpzed fit
-        sout = sout + delim + '{0:1d}'.format(td.trp_valid )
-        sout = sout + delim + '{0:9.3f}'.format(td.trp_snr )
-        sout = sout + delim + '{0:11.5f}'.format(td.trp_epochbtjd) 
-        sout = sout + delim + '{0:7.3f}'.format(td.trp_dur )
-        sout = sout + delim + '{0:8.1f}'.format(td.trp_depth)  #55
+        sout = sout + delim + '{0:1d}'.format(td['trp_valid'])
+        sout = sout + delim + '{0:9.3f}'.format(td['trp_snr'])
+        sout = sout + delim + '{0:11.5f}'.format(td['trp_epochbtjd'])
+        sout = sout + delim + '{0:7.3f}'.format(td['trp_dur'])
+        sout = sout + delim + '{0:8.1f}'.format(td['trp_depth'])  #55
         # Centroid Fits
-        sout = sout + delim + '{0:7.2f}'.format(td.cent_oot_offset) 
-        sout = sout + delim + '{0:6.2f}'.format(td.cent_oot_offset_e) 
-        sout = sout + delim + '{0:7.2f}'.format(td.cent_tic_offset )
-        sout = sout + delim + '{0:6.2f}'.format(td.cent_tic_offset_e )
+        sout = sout + delim + '{0:7.2f}'.format(td['cent_oot_offset'])
+        sout = sout + delim + '{0:6.2f}'.format(td['cent_oot_offset_e'])
+        sout = sout + delim + '{0:7.2f}'.format(td['cent_tic_offset'])
+        sout = sout + delim + '{0:6.2f}'.format(td['cent_tic_offset_e'])
         # Odd/Even
-        sout = sout + delim + '{0:8.3f}'.format(td.oe_signif) #60
+        sout = sout + delim + '{0:8.3f}'.format(td['oe_signif']) #60
         
         fo.write('{0}\n'.format(sout))
