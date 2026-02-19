@@ -181,11 +181,10 @@ if __name__ == '__main__':
     fvpn = dataBlock['f1']
     fvvet = dataBlock['f2']
     
-    allvet = np.zeros_like(allpn)
-    for i in range(len(allvet)):
-        idx = np.where((alltic[i] == fvtic) & (allpn[i] == fvpn))[0]
-        if len(idx) > 0:
-            allvet[i] = fvvet[idx[0]]
+    vet_lookup = {(int(fvtic[i]), int(fvpn[i])): int(fvvet[i])
+                  for i in range(len(fvtic))}
+    allvet = np.array([vet_lookup.get((int(alltic[i]), int(allpn[i])), 0)
+                       for i in range(len(allpn))], dtype=allpn.dtype)
     # only keep tces with both valid dv and trapezoid fits
     # and flux vetted pass
     idx = np.where((allatvalid == 1) & (alltrpvalid == 1) & (allsolarflux > 0.0) & \
@@ -378,10 +377,27 @@ if __name__ == '__main__':
     totrank = (rprank + mesrank + tmagrank + durratrank + solarfrank + snr2mesrank+\
                 depsimrank) / 7.0 + 1.0
 
+    # Build lookup dicts for ranking loop (replaces per-TCE np.where scans)
+    toi_tp_lookup = {}
+    for i in range(len(toiFedTic)):
+        key = (int(toiFedTic[i]), int(toiFedPN[i]))
+        val = int(toiFedQual[i])
+        if key not in toi_tp_lookup or val > toi_tp_lookup[key]:
+            toi_tp_lookup[key] = val
+    toi_tic_lookup = set(int(t) for t in toiFedTic)
+    kp_tp_lookup = set((int(kpFedTic[i]), int(kpFedPN[i])) for i in range(len(kpFedTic)))
+    kp_tic_lookup = set(int(t) for t in kpFedTic)
+    mod_lookup = {(int(modTic[i]), int(modPN[i])): i for i in range(len(modTic))}
+    mod2_lookup = {(int(modTic2[i]), int(modPN2[i])): i for i in range(len(modTic2))}
+    sw_lookup = {(int(swTic[i]), int(swPN[i])): i for i in range(len(swTic))}
+    sm_set = set((int(smFedTic1[i]), int(smFedPN1[i])) for i in range(len(smFedTic1)))
+    pdc_lookup = {(int(pdcTic[i]), int(pdcPn[i])): i for i in range(len(pdcTic))}
+    md_lookup = {(int(mdTic[i]), int(mdPN[i])): i for i in range(len(mdTic))}
+
     if nWrk == 1 :
         fout1 = open(fileOut1,'w')
         fout2 = open(fileOut2, 'w')
-        fout3 = open(fileOut3, 'w')              
+        fout3 = open(fileOut3, 'w')
     ia = np.argsort(-totrank)
     for i in range(len(ia)):
         if np.mod(i, nWrk) == wID:
@@ -391,44 +407,41 @@ if __name__ == '__main__':
             # fc is the cause flags for going to Tier 2
             fc = np.zeros((15,), dtype=int)
             fc_str = ''
-            ib = np.where((alltic[j] == toiFedTic) & (allpn[j] == toiFedPN))[0]
-            if len(ib)>0:
+            _key = (int(alltic[j]), int(allpn[j]))
+            toi_match = toi_tp_lookup.get(_key)
+            if toi_match is not None:
                 # Was it a direct match or not
-                mtch = np.max(toiFedQual[ib])
-                if mtch == 1:
+                if toi_match == 1:
                     matchFlg = 1
                 else:
                     matchFlg = -1
             # multiplanet systems can fall through the cracks add another flag
             #  of nearby TOI exists so one needs to investigate the relationship
             if matchFlg == 0:
-                ib = np.where((alltic[j] == toiFedTic))[0]
-                if len(ib)>0:
+                if int(alltic[j]) in toi_tic_lookup:
                     # has some kind of neighbor with previously identified toi
                     matchFlg = 3
             # Look to previous Planet match
-            ib = np.where((alltic[j] == kpFedTic) & (allpn[j] == kpFedPN))[0]
-            if len(ib)>0:
+            if _key in kp_tp_lookup:
                 matchFlg = 2
             # now look for a nearby previous planet was found independent of ephemeris
             if not matchFlg == 2:
-                ib = np.where((alltic[j] == kpFedTic))[0]
-                if len(ib)>0:
+                if int(alltic[j]) in kp_tic_lookup:
                     matchFlg = 4
             curstr = '{0:d} {1:d} {2:f} {3:d}\n'.format(alltic[j], allpn[j], totrank[j], matchFlg)
             print(curstr)
     
             # Find modshift data to place in tier
-            kidx = np.where((alltic[j] == modTic) & (allpn[j] == modPN))[0]
-            kidx2 = np.where((alltic[j] == modTic2) & (allpn[j] == modPN2))[0]
-            # Find sweet data 
-            kswidx = np.where((alltic[j] == swTic) & (allpn[j] == swPN))[0]
+            kidx = mod_lookup[_key]
+            kidx2 = mod2_lookup[_key]
+            # Find sweet data
+            kswidx = sw_lookup.get(_key)
             # Find self match TCE
-            ksmidx = np.where((alltic[j] == smFedTic1) & (allpn[j] == smFedPN1))[0]
+            ksmidx = _key in sm_set
             # Find PDC Goodness stat data
-            kpdcidx = np.where((alltic[j] == pdcTic) & (allpn[j] == pdcPn))[0]
+            kpdcidx = pdc_lookup.get(_key)
             # Find Momentum deump data
-            kmdidx = np.where((alltic[j] == mdTic) & (allpn[j] == mdPN))[0]
+            kmdidx = md_lookup.get(_key)
             # Find planet radius
             curRp = allrp[j]
             curSNR = allsnr[j]
@@ -496,7 +509,7 @@ if __name__ == '__main__':
                 fc_str = fc_str + 'OEDV_'
                 nFlags = nFlags + 1
             sweetFail = False
-            if len(kswidx)>0:
+            if kswidx is not None:
                 # Look for sweet test results
                 if swResidRatio[kswidx] < 0.8:
                     tier1 = False
@@ -505,13 +518,13 @@ if __name__ == '__main__':
                     fc_str = fc_str + 'Sweet_'
                     nFlags = nFlags + 1
             # Other TCE match
-            if len(ksmidx)>0:
+            if ksmidx:
                 tier1 = False
                 fc[9] = 1
                 fc_str = fc_str + 'OthTCEMtch_'
                 nFlags = nFlags + 1
             # PDC goodness stat
-            if len(kpdcidx)>0:
+            if kpdcidx is not None:
                 if pdcNoi[kpdcidx] < 0.8:# and pdcCor[kpdcidx] <:
                     tier1 = False
                     fc[10] = 1
@@ -524,7 +537,7 @@ if __name__ == '__main__':
                 fc_str = fc_str +'RpBig_'
                 nFlags = nFlags + 1
             # Momentum dump on events caution
-            if len(kmdidx)>0:
+            if kmdidx is not None:
                 if mdFrac[kmdidx] > 0.9:
                     tier1 = False
                     fc[12] = 1
