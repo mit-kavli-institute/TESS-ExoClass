@@ -287,21 +287,34 @@ def pgmcmc_prior(ioblk):
 
 
 if __name__ == '__main__':
+    # Parse the command line arguments for multiprocessing
+    # With Gnu parallel with 13 cores
+    # seq 0 12 | parallel python modshift_test.py 1 -w {} -n 13
     parser = argparse.ArgumentParser()
     parser.add_argument("iteration", type=int,\
                     default = 1, choices=[1,2], \
                     help="Iteration # 1=DV median filtered LC; 2=alternate detrended LC")
+    parser.add_argument("-w", type=int, default=0,
+                        help="Worker ID Number 0 through nWrk-1")
+    parser.add_argument("-n", type=int, default=1,
+                        help="Number of Workers")
     args = parser.parse_args()
+    wID = int(args.w)
+    nWrk = int(args.n)
     tp = tec_use_params()
 
     if args.iteration == 1:
         print('Running Modshift on DV Median detrended light curves')
         medianInputFlux = True
         fileOut = 'spoc_modshift_med_{0}.txt'.format(tp.tecfile)
+        if nWrk > 1:
+            fileOut = 'spoc_modshift_med_{0}_w{1:d}.txt'.format(tp.tecfile, wID)
     elif args.iteration == 2:
         print('Running Modshift on Altername detrended light curves')
         medianInputFlux = False
         fileOut = 'spoc_modshift_{0}.txt'.format(tp.tecfile)
+        if nWrk > 1:
+            fileOut = 'spoc_modshift_{0}_w{1:d}.txt'.format(tp.tecfile, wID)
     else:
         print('First Argument must be 1 or 2')
         sys.exit(1)
@@ -379,7 +392,18 @@ if __name__ == '__main__':
             alltic, allpn, allatvalid, allrp, allrstar, alllogg, allper, alltmags, \
             allmes, allsnr, alldur, allsolarflux, allatdep, allatepoch, \
             allatrpdrstar, allatrpdrstare, allatadrstar)
-            
+
+    # Reduce to this worker's modulo slice before the rerun trim so resume
+    # composes correctly with parallel workers.
+    if nWrk > 1:
+        wkrIdx = np.where(np.mod(np.arange(len(alltic)), nWrk) == wID)[0]
+        alltic, allpn, allatvalid, allrp, allrstar, alllogg, allper, alltmags, \
+                allmes, allsnr, alldur, allsolarflux, allatdep, allatepoch, \
+                allatrpdrstar, allatrpdrstare, allatadrstar = idx_filter(wkrIdx, \
+                alltic, allpn, allatvalid, allrp, allrstar, alllogg, allper, alltmags, \
+                allmes, allsnr, alldur, allsolarflux, allatdep, allatepoch, \
+                allatrpdrstar, allatrpdrstare, allatadrstar)
+
     if rerun:
         idx = np.where((alltic == lstTic))[0]
         idxUse = np.arange(idx[0]+1, len(alltic))
