@@ -294,6 +294,7 @@ if __name__ == '__main__':
             if os.path.isfile(pdcResults):
                 f = h5py.File(pdcResults,'r')
                 pdcStats = np.array(f['pdc_stats'])
+                f.close()
                 if pdcStats[1] < minPdcNoi:
                     minPdcNoi = pdcStats[1]
                 if pdcStats[2] > maxPdcCor:

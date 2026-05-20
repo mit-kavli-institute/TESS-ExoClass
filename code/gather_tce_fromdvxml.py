@@ -182,8 +182,8 @@ class tce_seed(object):
         fp.close()
         
     def fill_objlist_from_hd5f(self, fileName):
-        fp = h5py.File(fileName, 'r')
-        np_dset = np.array(fp['dset'])
+        with h5py.File(fileName, 'r') as fp:
+            np_dset = np.array(fp['dset'])
         # Start with empty list
         all_objs = []
         # iterate through the numpy structured array and save to objects

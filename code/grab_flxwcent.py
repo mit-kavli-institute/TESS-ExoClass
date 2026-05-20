@@ -225,8 +225,10 @@ if __name__ == '__main__':
                 tmp = f.create_dataset('dqflgs', data=dqflgs, compression='gzip')
                 tmp = f.create_dataset('valid_data_flag', data=valid_data_flag, compression='gzip')
                 tmp = f.create_dataset('pdc_stats', data=pdcStats)
-                
-                print(curTic, 'alpha')                
+                f.close()
+                hdulist.close()
+
+                print(curTic, 'alpha')
 
 
 #        fo = open(fileOutput, 'w')
