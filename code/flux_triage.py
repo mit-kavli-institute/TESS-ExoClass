@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 import math
+import argparse
 from gather_tce_fromdvxml import tce_seed
 import scipy.special as spec
 from tec_used_params import tec_use_params
@@ -53,8 +54,22 @@ def get_useable_ephems(all_tces):
     return allepics, allpns, allper, allepoch, allduration
 
 if __name__ == '__main__':
+    # Parse the command line arguments for multiprocessing
+    # With Gnu parallel with 13 cores
+    # seq 0 12 | parallel python flux_triage.py -w {} -n 13
+    # then merge the per-worker outputs into the canonical vet file:
+    #   cat spoc_fluxtriage_{tecfile}_w*.txt > spoc_fluxtriage_{tecfile}.txt
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", type=int, default=0,
+                        help="Worker ID Number 0 through nWrk-1")
+    parser.add_argument("-n", type=int, default=1,
+                        help="Number of Workers")
+    args = parser.parse_args()
+    wID = int(args.w)
+    nWrk = int(args.n)
+
     tp = tec_use_params()
-    
+
     # Load the h5 file that contains TCE seed information
     # The h5 file is created by gather_tce_fromdvxml.py
     tceSeedInFile = '{0}_tce.h5'.format(tp.tecfile)
@@ -64,12 +79,14 @@ if __name__ == '__main__':
     SECTOR = tp.sector
     fluxVetOut = 'spoc_fluxtriage_{0}.txt'.format(tp.tecfile)
 #    fluxVetOut = 'junk.txt'
+    if nWrk > 1:
+        fluxVetOut = 'spoc_fluxtriage_{0}_w{1:d}.txt'.format(tp.tecfile, wID)
 
     tcedata = tce_seed()
     all_tces = tcedata.fill_objlist_from_hd5f(tceSeedInFile)
-    
+
     allepics, allpns, allpers, allepochs, alldurations = get_useable_ephems(all_tces)
-    
+
     fout = open(fluxVetOut, 'w')
     debug = False
     # Loop over tces and perform flux vetting
@@ -77,11 +94,11 @@ if __name__ == '__main__':
     #debug=True
     #alltic = np.array([x.epicId for x in all_tces], dtype=np.int64)
     #idxdebug = np.where(alltic == 123702439)[0]
-    cnt = 0
     #for td in [all_tces[idxdebug[0]],all_tces[idxdebug[0]]]:
-    for td in all_tces:
+    for cnt, td in enumerate(all_tces):
+        if np.mod(cnt, nWrk) != wID:
+            continue
         print(cnt)
-        cnt = cnt+1
         epicid = td.epicId
         pn = td.planetNum
         period = 0.0
