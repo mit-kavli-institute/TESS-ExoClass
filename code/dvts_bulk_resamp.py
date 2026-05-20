@@ -18,6 +18,7 @@ import h5py
 import glob
 import os
 import math
+import argparse
 from tec_used_params import tec_use_params
 
 def make_data_dirs(prefix, sector, epic):
@@ -197,6 +198,20 @@ def dvts_resamp(file, dirOut, RESAMP, SECTOR=None, overwrite=True):
     return dataSpanMax, kpCadenceNo, kpTimetbjd, kpQuality, kpPDC
 
 if __name__ == "__main__":
+    # Parse the command line arguments for multiprocessing
+    # With Gnu parallel with 13 cores
+    # seq 0 12 | parallel python dvts_bulk_resamp.py -w {} -n 13
+    # then merge per-worker cadno maps with:
+    #   python dvts_cadnomap_merge.py -n 13
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", type=int, default=0,
+                        help="Worker ID Number 0 through nWrk-1")
+    parser.add_argument("-n", type=int, default=1,
+                        help="Number of Workers")
+    args = parser.parse_args()
+    wID = int(args.w)
+    nWrk = int(args.n)
+
     tp = tec_use_params()
 
     dirInputs = '/pdo/spoc-data/{0}/dv-time-series/'.format(tp.spocdir)
@@ -207,6 +222,14 @@ if __name__ == "__main__":
     else:
         SECTOR_OVRRIDE = -1
     overwrite = True # Set False to keep old results and only do files that dont exist
+
+    # Single-worker mode writes cadnoVtimemap.txt directly (original behavior).
+    # Multi-worker mode writes a per-worker sidecar; dvts_cadnomap_merge.py
+    # combines the sidecars into the final cadnoVtimemap.txt.
+    if nWrk > 1:
+        cadnoMapFile = 'cadnoVtimemap_part_w{0:d}.txt'.format(wID)
+    else:
+        cadnoMapFile = 'cadnoVtimemap.txt'
 
     fileList = glob.glob(os.path.join(dirInputs, '*dvt.fits*'))
     
@@ -229,13 +252,17 @@ if __name__ == "__main__":
     maxCad = -1
     cadenceDict = {}
 
-    # if the cadnoVtimemap.txt file exists from a previous running
+    # if the cadno-map output file exists from a previous running
     # then prevent it from being overwritten and exit
     # one should rename or remove it if one needs to rerun dvts_bulk_resamp
-    if os.path.isfile('cadnoVtimemap.txt'):
-        print('cadnoVtimemap.txt EXISTS! It Must be removed or renamed before rerunning')
+    if os.path.isfile(cadnoMapFile):
+        print('{0} EXISTS! It Must be removed or renamed before rerunning'.format(cadnoMapFile))
         exit()
-    
+
+    # Slice the file list to this worker's modulo stride.
+    fileList = [fileList[i] for i in range(len(fileList))
+                if np.mod(i, nWrk) == wID]
+
     for fil in fileList:
         cnt = cnt + 1
         if np.mod(cnt,10) == 0:
@@ -249,7 +276,12 @@ if __name__ == "__main__":
             if dataSpan+2.0*gdFrac > dataSpanMax+2.0*gdFracMax:
                 dataSpanMax = dataSpan
                 gdFracMax = gdFrac
-                fout = open('cadnoVtimemap.txt','w')
+                fout = open(cadnoMapFile,'w')
+                # In multi-worker mode, prepend a header line so the merger
+                # can pick the global winner across per-worker sidecars.
+                if nWrk > 1:
+                    fout.write('# MODE single DATASPAN {0:f} GDFRAC {1:f}\n'.format(
+                        dataSpanMax, gdFracMax))
                 for i, cad in enumerate(cadno):
                     momdump = int(0)
                     pdcfinite = int(0)
@@ -264,16 +296,18 @@ if __name__ == "__main__":
             for i, curCad in enumerate(cadno):
                 cadenceDict[curCad] = timetjd[i]
             dataSpanMax = len(cadenceDict)
-                
+
     # multisector output all times encountered
-    if not SECTOR_OVRRIDE is None:    
+    if not SECTOR_OVRRIDE is None:
         # split dictionary into separate cadnece and time arrays
         cadlist = [np.int32(x) for x in cadenceDict.keys()]
         timelist = [np.float64(x) for x in cadenceDict.values()]
         cadarr = np.array(cadlist, dtype=np.int32)
         timearr = np.array(timelist, dtype=float)
         ia = np.argsort(cadarr)
-        fout = open('cadnoVtimemap.txt','w')
+        fout = open(cadnoMapFile,'w')
+        if nWrk > 1:
+            fout.write('# MODE multi\n')
         for i in ia:
             fout.write('{0:d} {1:f} 0 0 1\n'.format(cadarr[i], timearr[i]))
         fout.close()
